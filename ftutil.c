@@ -123,18 +123,24 @@ int parse_command(char * buffer, char * arg) {
         command = EXIT;
     }
 
-    //Skip over whitespace:
-    while(*buffer == ' ' || *buffer == '\t') {
-        buffer++;
-    }
+    //Get the argument given:
+    if(arg != NULL) {
 
-    //Copy the argument over:
-    while((*buffer != ' ') && (*buffer != '\n') && (*buffer != '\r') && (*buffer != '\0')) {
-        *arg = *buffer;
-        arg++;
-        buffer++;
+        //Skip over whitespace:
+        while(*buffer == ' ' || *buffer == '\t') {
+            buffer++;
+        }
+
+        //Copy the argument over:
+        while((*buffer != ' ') && (*buffer != '\n') && (*buffer != '\r') && (*buffer != '\0')) {
+            *arg = *buffer;
+            arg++;
+            buffer++;
+        }
+
+        //Null-terminate:
+        *arg = '\0';
     }
-    *arg = '\0';
 
     return command;
 }

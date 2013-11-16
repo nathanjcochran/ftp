@@ -53,7 +53,7 @@ int main(int argc, char * argv[]) {
         //Send the request to the server:
         make_request(control_fd, request);
 
-    } while(strncmp(request, "exit", 4) != 0);
+    } while(parse_command(request, NULL) != EXIT);
 
     close(control_fd);
     printf("Connection closed\n");
@@ -64,6 +64,7 @@ int main(int argc, char * argv[]) {
 void control_connect(int ctrl_fd, char * host) {
     struct addrinfo hints, *results, *p;
 
+    //Specifications for the address to connect to:
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;

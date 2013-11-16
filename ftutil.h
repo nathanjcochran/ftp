@@ -7,6 +7,7 @@
 #define FILE_BUF_SIZE 4096
 
 #define PROMPT ">>"
+
 #define INVALID -1
 #define EXIT 0
 #define LIST 1

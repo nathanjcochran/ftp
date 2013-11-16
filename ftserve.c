@@ -11,7 +11,7 @@
 #include <netinet/in.h>
 #include "ftutil.h"
 
-#define GREETING "Welcome to Nathan's File Transfer Program\nCommands:\n\tlist - view files in current directory\n\tget <filename> - get the specified file\n"
+#define GREETING "Welcome to Nathan's File Transfer Program\nCommands:\n\tlist - view files in current directory\n\tget <filename> - get the specified file\n\tcd <directory> - change directories\n"
 
 //Static Variables:
 int server_fd, control_fd;
@@ -23,6 +23,8 @@ int get_command(int ctrl_fd, char *arg);
 void list_directories(int ctrl_fd);
 int data_connect(int ctrl_fd);
 void send_file(int ctrl_fd, char *arg);
+void change_directory(int ctrl_fd, char * directory);
+void show_cwd(int ctrl_fd);
 void signal_handler(int signal);
 void install_sigint_handler(void);
 
@@ -90,6 +92,10 @@ void handle_request(int ctrl_fd) {
 
             case GET:
                 send_file(ctrl_fd, arg);
+                break;
+
+            case CD:
+                change_directory(ctrl_fd, arg);
                 break;
         }
     }
@@ -214,6 +220,37 @@ void send_file(int ctrl_fd, char * arg) {
 
     close(file_fd);
     close(data_fd);
+}
+
+void change_directory(int ctrl_fd, char * directory) {
+
+    if(chdir(directory) == -1) {
+        if(errno == EACCES) {
+            send_message(ctrl_fd, "Error: permission denied\n");
+        }
+        else if(errno == ENOTDIR || errno == ENOENT) {
+            send_message(ctrl_fd, "Error: invalid directory\n");
+        }
+        else {
+            send_message(ctrl_fd, "Error: could not change directories\n");
+        }
+    }
+    else {
+        show_cwd(ctrl_fd);
+    }
+}
+
+void show_cwd(int ctrl_fd) {
+    char buf[BUF_SIZE];
+
+    if(getcwd(buf, BUF_SIZE) == NULL) {
+        perror("Error getting the current working directory");
+        close(ctrl_fd);
+        exit(EXIT_FAILURE);
+    }
+    send_message(ctrl_fd, "Current working directory: ");
+    send_message(ctrl_fd, buf);
+    send_message(ctrl_fd, "\n");
 }
 
 
