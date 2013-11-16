@@ -11,7 +11,7 @@
 #include <netinet/in.h>
 #include "ftutil.h"
 
-#define GREETING "Welcome to Nathan's File Transfer Program\nCommands:\n\tlist - view files in current directory\n\tget <filename> - get the specified file\n\tcd <directory> - change directories\n"
+#define GREETING "Welcome to Nathan's File Transfer Program\nCommands:\n\tlist - view files in current directory\n\tget <filename> - get the specified file\n\tcd <directory> - change directory\n\tpwd - print working directory\n"
 
 //Static Variables:
 int server_fd, control_fd;
@@ -97,6 +97,11 @@ void handle_request(int ctrl_fd) {
             case CD:
                 change_directory(ctrl_fd, arg);
                 break;
+
+            case PWD:
+                show_cwd(ctrl_fd);
+                break;
+
         }
     }
 }

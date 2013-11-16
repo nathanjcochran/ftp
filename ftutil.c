@@ -116,6 +116,13 @@ int parse_command(char * buffer, char * arg) {
         command = CD;   
     }   
 
+    else if(strncmp(buffer, "pwd ", 4) == 0 ||
+            strncmp(buffer, "pwd\t", 4) == 0 ||
+            strncmp(buffer, "pwd\n", 4) == 0) {
+        buffer = buffer + 3;
+        command = PWD;   
+    }
+
     else if(strncmp(buffer, "exit ", 5) == 0 ||
             strncmp(buffer, "exit\t", 5) == 0 ||
             strncmp(buffer, "exit\n", 5) == 0) {

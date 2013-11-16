@@ -13,6 +13,7 @@
 #define LIST 1
 #define GET 2
 #define CD 3
+#define PWD 4
 
 void send_message(int socket_fd, char *message);
 int create_socket(void);
