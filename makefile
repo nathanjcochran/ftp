@@ -15,14 +15,14 @@ ftserve: ftserve.o ftutil.o
 ftclient: ftclient.o ftutil.o
 	$(CC) $(CFLAGS) -o $@ ftclient.o ftutil.o
     
-ftserve.o: ftserve.c ftutil.c
-	$(CC) $(CFLAGS) -c $^
+ftserve.o: ftserve.c ftserve.h
+	$(CC) $(CFLAGS) -c ftserve.c
 
-ftclient.o: ftclient.c 
-	$(CC) $(CFLAGS) -c $^
+ftclient.o: ftclient.c ftclient.h
+	$(CC) $(CFLAGS) -c ftclient.c
 
 ftutil.o: ftutil.c ftutil.h
-	$(CC) $(CFLAGS) -c $^
+	$(CC) $(CFLAGS) -c ftutil.c
 
 clean:
 	rm -f $(PROGS) *.o *~

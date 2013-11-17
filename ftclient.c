@@ -1,36 +1,14 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <signal.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/stat.h>
-#include <netdb.h>
-#include "ftutil.h"
+#include "ftclient.h"
 
 //Static Variables:
 int control_fd;
-
-//Function Prototypes:
-void control_connect(int ctrl_fd, char *host);
-void receive_message(int ctrl_fd);
-void make_request(int ctrl_fd, char *request);
-void get_request(int ctrl_fd, char *response);
-int open_data_connection(int ctrl_fd);
-void receive_listing(int data_fd);
-void receive_file(int data_fd, char *filename);
-void signal_handler(int signal);
-void install_signal_handlers(void);
 
 int main(int argc, char * argv[]) {
     char request[BUF_SIZE];
 
     //Ensure a hostname was specified:
     if(argc != 2) {
-        printf("Error: please specify a hostname\n");
+        printf("Usage:\n\t%s <server hostname>\n", argv[0]);
         exit(EXIT_SUCCESS);
     }
 
@@ -61,6 +39,12 @@ int main(int argc, char * argv[]) {
     return EXIT_SUCCESS;
 }
 
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Initiates a control connection with the specified server
+ * Param:   int ctrl_fd -  File descriptor of the socket to open the connection on
+ * Param:   char * host -  Name of the server to connect to
+ * Return:  void
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 void control_connect(int ctrl_fd, char * host) {
     struct addrinfo hints, *results, *p;
 
@@ -70,23 +54,30 @@ void control_connect(int ctrl_fd, char * host) {
     hints.ai_socktype = SOCK_STREAM;
 
     //Get address info for specified host:
-    if(getaddrinfo(host, CONTROL_PORT_STR, &hints, &results) == -1) {
-        perror("Error getting address info");
+    if(getaddrinfo(host, CONTROL_PORT_STR, &hints, &results) != 0) {
+        perror("Error getting server address info");
+        printf("Please check that the server hostname is correct\n");
         exit(EXIT_FAILURE);
     }
 
     //Iterate through linked list results, attempting to connect:
     for(p = results; p != NULL; p = p->ai_next) {
         if(connect(ctrl_fd, p->ai_addr, p->ai_addrlen) != -1) {
+            freeaddrinfo(results);
             return;
         }
     }
 
-    perror("Unable to open control connection to specified host");
+    perror("Unable to open control connection with specified host");
     close(ctrl_fd);
     exit(EXIT_FAILURE);
 }
 
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Reads messages sent from the server until the server sends a prompt or closes the connection
+ * Param:   int ctrl_fd -  File descriptor of the control connection
+ * Return:  void
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 void receive_message(int ctrl_fd) {
     int i, num_read;
     char buffer[BUF_SIZE];
@@ -123,6 +114,12 @@ void receive_message(int ctrl_fd) {
 }
 
 
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Sends a request to the server, and handles any client-side preparations
+ * Param:   int ctrl_fd -  File descriptor of the control connection
+ * Param:   char * request -  The user's raw request
+ * Return:  void
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 void make_request(int ctrl_fd, char * request) {
     int data_fd, command;
     char arg[BUF_SIZE];
@@ -149,6 +146,12 @@ void make_request(int ctrl_fd, char * request) {
 }
 
 
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Reads user input into the response buffer
+ * Param:   int ctrl_fd -  File descriptor of the control connection
+ * Param:   char * response -  The buffer to store the user input
+ * Return:  void
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 void get_request(int ctrl_fd, char * response) {
     
     if(fgets(response, BUF_SIZE, stdin) == NULL) {
@@ -159,6 +162,11 @@ void get_request(int ctrl_fd, char * response) {
 }
 
 
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Creates a passive socket and waits for the server to connect, thereby initiating the data connection
+ * Param:   int ctrl_fd -  File descriptor of the control connection
+ * Return:  int -  File descriptor of the data connection
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 int open_data_connection(int ctrl_fd) {
     struct sockaddr_in ctrl_address, data_address;
     int passive_fd, data_fd;
@@ -204,6 +212,11 @@ int open_data_connection(int ctrl_fd) {
 }
 
 
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Reads and displays a directory listing from a data connection
+ * Param:   int data_fd -  File descriptor of the data connection to read from
+ * Return:  void
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 void receive_listing(int data_fd) {
     char buffer[BUF_SIZE];
     int num_read;
@@ -213,6 +226,12 @@ void receive_listing(int data_fd) {
     }
 }
 
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Receives a file over a data connection, saving it in the client's current directory
+ * Param:   int data_fd -  File descriptor of the data connection
+ * Param:   char * filename -  Name of the file that is being received
+ * Return:  void
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 void receive_file(int data_fd, char * filename) {
     int file_fd, num_read;
     char buffer[FILE_BUF_SIZE];
@@ -275,7 +294,12 @@ void receive_file(int data_fd, char * filename) {
     }
 }
 
-void signal_handler(int signal) {
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * A signal handler for sigint and sigterm signals.  Cleans up and says goodbye.
+ * Param:   int sig -  The signal received
+ * Return:  void
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+void signal_handler(int sig) {
     printf("\nClosing connection to server...\n");
     send_message(control_fd, "exit\n");
 
@@ -285,6 +309,11 @@ void signal_handler(int signal) {
 }
 
 
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Installs the signal handlers for the sigint and sigterm signals
+ * Param:   void
+ * Return:  void
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 void install_signal_handlers(void) {
     struct sigaction sig;
 

@@ -1,32 +1,7 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <signal.h>
-#include <dirent.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include "ftutil.h"
-
-#define GREETING "Welcome to Nathan's File Transfer Program\nCommands:\n\tlist - view files in current directory\n\tget <filename> - get the specified file\n\tcd <directory> - change directory\n\tpwd - print working directory\n"
+#include "ftserve.h"
 
 //Static Variables:
 int server_fd, control_fd;
-
-//Function Prototypes:
-int start_server(void);
-void handle_request(int ctrl_fd);
-int get_command(int ctrl_fd, char *arg);
-void list_directories(int ctrl_fd);
-int data_connect(int ctrl_fd);
-void send_file(int ctrl_fd, char *arg);
-void change_directory(int ctrl_fd, char * directory);
-void show_cwd(int ctrl_fd);
-void signal_handler(int signal);
-void install_sigint_handler(void);
 
 int main(int argc, char * argv[]) {
 
@@ -56,6 +31,11 @@ int main(int argc, char * argv[]) {
 }
 
 
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Creates a passive socket that listens on the control port
+ * Param:   void
+ * Return:  int -  File descriptor of the passive socket
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 int start_server(void) {
     int fd;
 
@@ -69,13 +49,53 @@ int start_server(void) {
     return fd;
 }
 
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Accepts an incoming connection on the control port
+ * Param:   int socket_fd -  File descriptor of the passive, listening socket
+ * Return:  int -  File descriptor for the newly initiated control connection
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+int accept_connection(int socket_fd) {
+    struct sockaddr_in address;
+    char address_str[BUF_SIZE];
+    int connection_fd;
+    unsigned int length;
 
+    //Accept a connection:
+    length = sizeof(address);
+    if((connection_fd = accept(socket_fd, (struct sockaddr *) &address, &length)) == -1) {
+        perror("Error accepting incoming connection");
+        close(socket_fd);
+        exit(EXIT_FAILURE);
+    }
+    
+    //Get the peer's address as a string:
+    if(inet_ntop(AF_INET, &address.sin_addr, address_str, BUF_SIZE) == NULL) {
+        perror("Error converting ip address to string");
+        close(socket_fd);
+        exit(EXIT_FAILURE);
+    }
+    
+    //Print message:
+    printf("Connection accepted: %s\n", address_str);
+
+    return connection_fd;
+}
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Handles a complete client session
+ * Param:   int ctrl_fd -  File descriptor of the control connection
+ * Return:  void
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 void handle_request(int ctrl_fd) {
     int command;
     char arg[BUF_SIZE];
 
     //Display greeting and instructions:
-    send_message(ctrl_fd, GREETING);
+    send_message(ctrl_fd, "Welcome to Nathan's File Transfer Program\nCommands:\n\t");
+    send_message(ctrl_fd, "pwd\t- print working directory\n\t");
+    send_message(ctrl_fd, "list\t- view files in current directory\n\t");
+    send_message(ctrl_fd, "cd <directory>\t- change directory\n\t");
+    send_message(ctrl_fd, "get <filename>\t- get the specified file\n");
 
     //Get user's command choice:
     while((command = get_command(ctrl_fd, arg)) != EXIT) {
@@ -106,6 +126,12 @@ void handle_request(int ctrl_fd) {
     }
 }
 
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Reads a single user's command from the control socket, and returns the command type
+ * Param:   int ctrl_fd -  File descriptor of the control socket
+ * Param:   char * arg -  Buffer to store any arguments sent with the command
+ * Return:  int -  Command type identifier
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 int get_command(int ctrl_fd, char * arg) {
     int i;
     char buffer[BUF_SIZE];
@@ -138,6 +164,11 @@ int get_command(int ctrl_fd, char * arg) {
     return parse_command(buffer, arg);
 }
 
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Creates a data connection with a client and sends a list of all files in the current directory
+ * Param:   int ctrl_fd -  File descriptor of the control connection
+ * Return:  void
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 void list_directories(int ctrl_fd) {
     DIR * directory;
     struct dirent * entry;
@@ -164,6 +195,11 @@ void list_directories(int ctrl_fd) {
 }
 
 
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Initiates a data connection with a listening client
+ * Param:   int ctrl_fd -  File descriptor of the control connection
+ * Return:  int -  File descriptor of the newly initiated data connection
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 int data_connect(int ctrl_fd) {
     struct sockaddr_in address;
     int data_fd;
@@ -193,7 +229,13 @@ int data_connect(int ctrl_fd) {
     return data_fd;
 }
 
-void send_file(int ctrl_fd, char * arg) {
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Creates a data connection with a client and sends the specified file across it
+ * Param:   int ctrl_fd -  File descriptor of the control connection
+ * Param:   char * arg -  Name of the file to send
+ * Return:  void
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+void send_file(int ctrl_fd, char * filename) {
     int data_fd, file_fd, num_read;
     char c;
 
@@ -201,7 +243,7 @@ void send_file(int ctrl_fd, char * arg) {
     data_fd = data_connect(ctrl_fd);
 
     //Open the specified file:
-    if((file_fd = open(arg, O_RDONLY)) == -1) {
+    if((file_fd = open(filename, O_RDONLY)) == -1) {
         if(errno == ENOENT) {
             send_message(ctrl_fd, "Invalid filename: file does not exist\n");
             close(data_fd);
@@ -227,6 +269,12 @@ void send_file(int ctrl_fd, char * arg) {
     close(data_fd);
 }
 
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Changes the current working directory, and informs client of new location
+ * Param:   int ctrl_fd -  File descriptor of the control connection
+ * Param:   char * directory -  Name of the target directory
+ * Return:  void
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 void change_directory(int ctrl_fd, char * directory) {
 
     if(chdir(directory) == -1) {
@@ -245,6 +293,11 @@ void change_directory(int ctrl_fd, char * directory) {
     }
 }
 
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Shows the client the current working directory
+ * Param:   int ctrl_fd -  File descriptor of the control connection
+ * Return:  void
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 void show_cwd(int ctrl_fd) {
     char buf[BUF_SIZE];
 
@@ -259,7 +312,12 @@ void show_cwd(int ctrl_fd) {
 }
 
 
-void signal_handler(int signal) {
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Signal handler for the sigint and sigterm signals.  Cleans up and says goodbye.
+ * Param:   int signal -  The signal received
+ * Return:  void
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+void signal_handler(int sig) {
     if(control_fd != -1) {
         printf("Closing client connection...\n");
         send_message(control_fd, "Server closed connection.\n");
@@ -275,6 +333,11 @@ void signal_handler(int signal) {
 }
 
 
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Installs the signal handlers for the sigint and sigterm signals
+ * Param:   void
+ * Return:  void
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 void install_sigint_handler(void) {
     struct sigaction sig;
 

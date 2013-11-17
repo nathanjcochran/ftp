@@ -1,14 +1,11 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netdb.h>
-#include <arpa/inet.h>
 #include "ftutil.h"
 
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Sends a message over the specified socket
+ * Param:   int socket_fd -  File descriptor of connection to send message over
+ * Param:   char * message -  Message to send
+ * Return:  void
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 void send_message(int socket_fd, char * message) {
     int length = strlen(message);
 
@@ -20,6 +17,11 @@ void send_message(int socket_fd, char * message) {
 }
 
 
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Creates a new IPv4 TCP socket
+ * Param:   void
+ * Return:  int -  File descriptor of the newly created socket
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 int create_socket(void) {
     int socket_fd;
 
@@ -32,6 +34,12 @@ int create_socket(void) {
     return socket_fd;
 }
 
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Binds the socket to the specified port.  Used in creating a passive socket
+ * Param:   int socket_fd -  File descriptor of the socket to bind
+ * Param:   unsigned short port -  The port number to bind the socket to
+ * Return:  void
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 void bind_socket(int socket_fd, unsigned short port) {
     struct sockaddr_in address;
 
@@ -48,6 +56,11 @@ void bind_socket(int socket_fd, unsigned short port) {
     }
 }
 
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Makes the specified socket listen for incoming connections
+ * Param:   int socket_fd -  Socket to listen for connections
+ * Return:  void
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 void listen_socket(int socket_fd) {
 
     if(listen(socket_fd, BACKLOG) == -1) {
@@ -58,34 +71,14 @@ void listen_socket(int socket_fd) {
 }
 
 
-int accept_connection(int socket_fd) {
-    struct sockaddr_in address;
-    char address_str[BUF_SIZE];
-    int connection_fd;
-    unsigned int length;
-
-    //Accept a connection:
-    length = sizeof(address);
-    if((connection_fd = accept(socket_fd, (struct sockaddr *) &address, &length)) == -1) {
-        perror("Error accepting incoming connection");
-        close(socket_fd);
-        exit(EXIT_FAILURE);
-    }
-    
-    //Get the peer's address as a string:
-    if(inet_ntop(AF_INET, &address.sin_addr, address_str, BUF_SIZE) == NULL) {
-        perror("Error converting ip address to string");
-        close(socket_fd);
-        exit(EXIT_FAILURE);
-    }
-    
-    //Print message:
-    printf("Connection accepted: %s\n", address_str);
-
-    return connection_fd;
-}
 
 
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Parses the client's command from the buffer, and returns the appropriate command type identifier
+ * Param:   char * buffer -  Buffer containing the user's raw command
+ * Param:   char * arg -  Buffer to return any arguments passed in with the command
+ * Return:  int -  The command type identifier
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 int parse_command(char * buffer, char * arg) {
     int command = INVALID;
     
@@ -152,6 +145,11 @@ int parse_command(char * buffer, char * arg) {
     return command;
 }
 
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Prompts the user for a yes/no answer.  Returns 1 for yes, 0 for no.
+ * Param:   char * prompt -  The prompt to display
+ * Return:  int -  1 for yes, 0 for no
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 int input_yn(char * prompt) {
     char buf[BUF_SIZE];
 
