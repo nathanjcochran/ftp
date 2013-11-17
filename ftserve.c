@@ -253,7 +253,7 @@ void show_cwd(int ctrl_fd) {
         close(ctrl_fd);
         exit(EXIT_FAILURE);
     }
-    send_message(ctrl_fd, "Current working directory: ");
+    send_message(ctrl_fd, "Remote working directory: ");
     send_message(ctrl_fd, buf);
     send_message(ctrl_fd, "\n");
 }

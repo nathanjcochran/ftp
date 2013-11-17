@@ -135,20 +135,16 @@ void make_request(int ctrl_fd, char * request) {
 
     //If it was a GET request, receive file:
     if(command == GET) {
-        data_fd = open_data_connection(control_fd);
+        data_fd = open_data_connection(ctrl_fd);
         receive_file(data_fd, arg);
-
         close(data_fd);
-        data_fd = -1;
     }
 
     //If it was a LIST request, receive directory listing:
     else if(command == LIST) {
-        data_fd = open_data_connection(control_fd);
+        data_fd = open_data_connection(ctrl_fd);
         receive_listing(data_fd);
-
         close(data_fd);
-        data_fd = -1;
     }
 }
 
@@ -277,8 +273,6 @@ void receive_file(int data_fd, char * filename) {
         close(data_fd);
         exit(EXIT_FAILURE);
     }
-
-    close(data_fd);
 }
 
 void signal_handler(int signal) {
