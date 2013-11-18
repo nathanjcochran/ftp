@@ -1,3 +1,10 @@
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Program: ftutil.c
+ * Author: Nathan Cochran
+ * Date: 11/17/2013
+ * Description: Contains simple utility functions
+ *      used in both ftclient.c and ftserve.c.
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 #include "ftutil.h"
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *

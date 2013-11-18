@@ -1,3 +1,13 @@
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Program: ftserve.c
+ * Author: Nathan Cochran
+ * Date: 11/17/2013
+ * Description: File transfer server.  Works with ftclient.c.
+ *      Build with "make server" or simply "make".
+ *      No command line options are required.  Simply
+ *      run the program (ports are defined in ftutil.h).
+ *      Close the server with ctrl-c or ctrl-d (sigint/sigterm).
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 #include "ftserve.h"
 
 //Static Variables:
@@ -92,6 +102,7 @@ void handle_request(int ctrl_fd) {
 
     //Display greeting and instructions:
     send_message(ctrl_fd, "Welcome to Nathan's File Transfer Program\nCommands:\n\t");
+    send_message(ctrl_fd, "exit\t- end the ftp session\n\t");
     send_message(ctrl_fd, "pwd\t- print working directory\n\t");
     send_message(ctrl_fd, "list\t- view files in current directory\n\t");
     send_message(ctrl_fd, "cd <directory>\t- change directory\n\t");

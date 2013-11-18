@@ -1,3 +1,9 @@
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Program: ftserve.h
+ * Author: Nathan Cochran
+ * Date: 11/17/2013
+ * Description: Header file for ftserve.c
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -1,3 +1,9 @@
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Program: ftclient.h
+ * Author: Nathan Cochran
+ * Date: 11/17/2013
+ * Description: Header file for ftclient.c
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

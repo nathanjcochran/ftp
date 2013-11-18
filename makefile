@@ -1,6 +1,6 @@
 CC=gcc
 DEBUG=-g
-CFLAGS=$(DEBUG) -Wall -Wshadow -Wunreachable-code -Wredundant-decls -Wmissing-declarations -Wold-style-definition -Wmissing-prototypes -Wdeclaration-after-statement
+CFLAGS=$(DEBUG) -Wall -Wshadow -Wredundant-decls -Wmissing-declarations -Wold-style-definition -Wmissing-prototypes -Wdeclaration-after-statement
 PROGS=ftserve ftclient
 
 all: $(PROGS)

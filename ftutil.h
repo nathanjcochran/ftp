@@ -1,3 +1,9 @@
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Program: ftutil.h
+ * Author: Nathan Cochran
+ * Date: 11/17/2013
+ * Description: Header file for ftutil.c
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 #include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>

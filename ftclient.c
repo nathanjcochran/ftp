@@ -1,3 +1,13 @@
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Program: ftclient.c
+ * Author: Nathan Cochran
+ * Date: 11/17/2013
+ * Description: File transfer client.  Works with ftserve.c.
+ *      Build with "make client" or simply "make".
+ *      One command line argument is required: the hostname
+ *      of the computer on which the server is running
+ *      (ports are defined in ftutil.h).
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 #include "ftclient.h"
 
 //Static Variables:
@@ -22,10 +32,10 @@ int main(int argc, char * argv[]) {
     control_connect(control_fd, argv[1]);
 
     do {
-        //Receive a message (perhaps just the prompt):
+        //Receive a message (often just the prompt):
         receive_message(control_fd);
 
-        //Get user request:
+        //Get user request/input:
         get_request(control_fd, request);
 
         //Send the request to the server:
@@ -53,14 +63,14 @@ void control_connect(int ctrl_fd, char * host) {
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
 
-    //Get address info for specified host:
+    //Get address info for the specified host:
     if(getaddrinfo(host, CONTROL_PORT_STR, &hints, &results) != 0) {
         perror("Error getting server address info");
         printf("Please check that the server hostname is correct\n");
         exit(EXIT_FAILURE);
     }
 
-    //Iterate through linked list results, attempting to connect:
+    //Iterate through linked list of results, attempting to connect:
     for(p = results; p != NULL; p = p->ai_next) {
         if(connect(ctrl_fd, p->ai_addr, p->ai_addrlen) != -1) {
             freeaddrinfo(results);
@@ -116,6 +126,7 @@ void receive_message(int ctrl_fd) {
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * Sends a request to the server, and handles any client-side preparations
+ *      (e.g. listening on a port for incoming data connections)
  * Param:   int ctrl_fd -  File descriptor of the control connection
  * Param:   char * request -  The user's raw request
  * Return:  void
@@ -124,7 +135,7 @@ void make_request(int ctrl_fd, char * request) {
     int data_fd, command;
     char arg[BUF_SIZE];
 
-    //Send the request:
+    //Send the raw request to the server:
     send_message(control_fd, request);
 
     //Parse the command:
@@ -163,7 +174,8 @@ void get_request(int ctrl_fd, char * response) {
 
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * Creates a passive socket and waits for the server to connect, thereby initiating the data connection
+ * Creates a passive socket and waits for the server to connect,
+ *      thereby initiating the data connection
  * Param:   int ctrl_fd -  File descriptor of the control connection
  * Return:  int -  File descriptor of the data connection
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -221,6 +233,7 @@ void receive_listing(int data_fd) {
     char buffer[BUF_SIZE];
     int num_read;
 
+    //Read and display data until the connection is closed:
     while((num_read = read(data_fd, buffer, BUF_SIZE)) > 0) {
         printf("%s", buffer);
     }
@@ -279,6 +292,7 @@ void receive_file(int data_fd, char * filename) {
             }
         } while((num_read = read(data_fd, buffer, FILE_BUF_SIZE)) > 0);
 
+        //Error reading from connection:
         if(num_read == -1) {
             perror("Error reading file from data connection");
             close(data_fd);
@@ -287,6 +301,7 @@ void receive_file(int data_fd, char * filename) {
         printf("File received: %s\n", filename);
     }
 
+    //Error reading from connection:
     if(num_read == -1) {
         perror("Error reading file from data connection");
         close(data_fd);
