@@ -1,7 +1,7 @@
 FTP
 ---
 
-#### COMPILATION INSTRUCTIONS:
+#### Compilation:
 
 Server: `make server`
 
@@ -9,7 +9,7 @@ Client: `make client`
 
 Both: `make`
 
-#### EXECUTION INSTRUCTIONS:
+#### Execution:
 
 Server: `ftserve`
 
