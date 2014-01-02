@@ -21,7 +21,7 @@ To close either the server or the client: `ctrl-c or ctrl-d (sigint/sigterm)`
 
 #### Usage:
 
-The client program provides the following commands for navigating and accessing files on the server:
+The client interface accepts the following commands for navigating and accessing files on the server:
 
     pwd   - print working directory
     list  - view files in the current directory
