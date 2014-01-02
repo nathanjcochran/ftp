@@ -1,4 +1,4 @@
-FTP
+ftp
 ---
 
 #### Compilation:
