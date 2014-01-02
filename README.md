@@ -1,26 +1,19 @@
 FTP
 ---
 
-COMPILING INSTRUCTIONS:
+##### COMPILATION INSTRUCTIONS:
 
-Server:
-	make server
+Server: `make server`
 
-Client:
-	make client
+Client: `make client`
 
-Both:
-	make
+Both: `make`
 
+##### EXECUTION INSTRUCTIONS:
 
-EXECUTION INSTRUCTIONS:
+Server: `ftserve`
 
-Server:
-	ftserve
+Client: `ftclient <server hostname>`
 
-Client:
-	ftclient <server hostname>
-
-To close either the server or the client:
-	ctrl-c or ctrl-d (sigint/sigterm)
+To close either the server or the client: `ctrl-c or ctrl-d (sigint/sigterm)`
 
