@@ -1,6 +1,5 @@
-Nathan Cochran
-CS372: Programming Assignment
-11/17/2013
+FTP
+---
 
 COMPILING INSTRUCTIONS:
 
